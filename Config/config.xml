@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<config xmlns="http://thelia.net/schema/dic/config"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://thelia.net/schema/dic/config http://thelia.net/schema/dic/config/thelia-1.0.xsd">
+
+    <hooks>
+        <hook id="codebarres.hookmanager" class="Codebarres\Hook\HookManager">
+            <tag name="hook.event_listener" event="main.head-css" type="back" method="insertCodebarresCss" />
+            <tag name="hook.event_listener" event="product.edit-js" type="back" method="insertCodesbarresJs" />
+            <tag name="hook.event_listener" event="product.modification.form-right.top" type="back" method="onProductEditBottom" />
+
+            <tag name="hook.event_listener" event="main.top-menu-tools" type="back" method="onMainTopMenuTools" />
+            <tag name="hook.event_listener" event="module.config-js" type="back" method="onModuleConfigurationJs" />
+            <tag name="hook.event_listener" event="module.configuration" type="back" method="onModuleConfiguration" />
+        </hook>
+    </hooks>
+</config>

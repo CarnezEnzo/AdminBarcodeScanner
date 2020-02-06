@@ -1,0 +1,232 @@
+{extends file="layout.tpl"}
+
+{block name="body-class"}page-codebarre{/block}
+
+{* Breadcrumb *}
+{block name='no-return-functions' append}
+    {$breadcrumbs = [
+    ['title' => {intl l="Scanner de codes-barres"}, 'url'=>{url path="/codebarre"}]
+    ]}
+{/block}
+
+{block name="main-content"}
+    <div class="main codebarre">
+
+        <section id="container" class="container">
+            <input type="hidden" name="decoder_readers" value="ean">
+            <input type="hidden" name="input-stream_constraints" value="800x600">
+            <input type="hidden" name="locator_patch-size" value="medium">
+            <input type="hidden" name="locator_half-sample" value="1" />
+            <input type="hidden" name="numOfWorkers" value="4" />
+
+            <div class="row">
+                <div class="col-sm-12">
+                    <h1 id="main-label" class="page-header text-center">SCANNER LE CODE-BARRE DU PRODUIT</h1>
+                </div>
+
+                <div class="col-md-12 col-lg-6 col-lg-offset-3 result-zone">
+                    {if $smarty.request.nocode}
+                        <div class="alert alert-warning">
+                            Aucun produit avec le code barre <strong>{$smarty.request.nocode}</strong> n'a été trouvé. Merci de scanner le code à nouveau.
+                        </div>
+                    {/if}
+                </div>
+
+                <div class="col-md-12 col-lg-6 col-lg-offset-3">
+                    <div id="interactive" class="viewport"></div>
+                </div>
+            </div>
+
+        </section>
+
+    </div><!-- /.layout -->
+{/block}
+
+
+{block name="stylesheet"}
+    {hook name="search.stylesheet"}
+{/block}
+
+{block name="after-javascript-include"}
+    <script src="{javascript file='assets/js/quagga.min.js'  source="Codebarres"}"></script>
+{/block}
+
+{block name="javascript-initialization"}
+    <script>
+    {literal}
+        $(function() {
+            {/literal}
+            var scanSound = new Audio("{asset file='assets/sounds/barcode-sound.mp3' source="Codebarres"}");
+            {literal}
+
+            var App = {
+                init : function() {
+                    Quagga.init(this.state, function(err) {
+                        if (err) {
+                            alert(err);
+                            return;
+                        }
+                        App.attachListeners();
+                        Quagga.start();
+                    });
+                },
+                attachListeners: function() {
+                    var self = this;
+
+                    $(".controls").on("click", "button.stop", function(e) {
+                        e.preventDefault();
+                        Quagga.stop();
+                    });
+
+                    $(".controls .reader-config-group").on("change", "input, select", function(e) {
+                        e.preventDefault();
+                        var $target = $(e.target),
+                            value = $target.attr("type") === "checkbox" ? $target.prop("checked") : $target.val(),
+                            name = $target.attr("name"),
+                            state = self._convertNameToState(name);
+
+                        // console.log("Value of "+ state + " changed to " + value);
+                        self.setState(state, value);
+                    });
+                },
+                _accessByPath: function(obj, path, val) {
+                    var parts = path.split('.'),
+                        depth = parts.length,
+                        setter = typeof val !== "undefined";
+
+                    return parts.reduce(function(o, key, i) {
+                        if (setter && (i + 1) === depth) {
+                            o[key] = val;
+                        }
+                        return key in o ? o[key] : {};
+                    }, obj);
+                },
+                _convertNameToState: function(name) {
+                    return name.replace("_", ".").split("-").reduce(function(result, value) {
+                        return result + value.charAt(0).toUpperCase() + value.substring(1);
+                    });
+                },
+                detachListeners: function() {
+                    $(".controls").off("click", "button.stop");
+                    $(".controls .reader-config-group").off("change", "input, select");
+                },
+                setState: function(path, value) {
+                    var self = this;
+
+                    if (typeof self._accessByPath(self.inputMapper, path) === "function") {
+                        value = self._accessByPath(self.inputMapper, path)(value);
+                    }
+
+                    self._accessByPath(self.state, path, value);
+
+                    // console.log(JSON.stringify(self.state));
+                    App.detachListeners();
+                    Quagga.stop();
+                    App.init();
+                },
+                inputMapper: {
+                    inputStream: {
+                        constraints: function(value){
+                            var values = value.split('x');
+                            return {
+                                width: parseInt(values[0]),
+                                height: parseInt(values[1])
+                            }
+                        }
+                    },
+                    numOfWorkers: function(value) {
+                        return parseInt(value);
+                    },
+                    decoder: {
+                        readers: function(value) {
+                            if (value === 'ean_extended') {
+                                return [{
+                                    format: "ean_reader",
+                                    config: {
+                                        supplements: [
+                                            'ean_5_reader', 'ean_2_reader'
+                                        ]
+                                    }
+                                }];
+                            }
+                            return [{
+                                format: value + "_reader",
+                                config: {}
+                            }];
+                        }
+                    }
+                },
+                state: {
+                    inputStream: {
+                        type : "LiveStream",
+                        constraints: {
+                            width: 800,
+                            height: 600,
+                            facingMode: "environment" // or user
+                        }
+                    },
+                    locator: {
+                        patchSize: "medium",
+                        halfSample: true
+                    },
+                    numOfWorkers: 4,
+                    decoder: {
+                        readers : [{
+                            format: "ean_reader",
+                            config: {}
+                        }]
+                    },
+                    locate: true
+                },
+                lastResult : null
+            };
+
+            App.init();
+
+            Quagga.onProcessed(function(result) {
+                var drawingCtx = Quagga.canvas.ctx.overlay,
+                    drawingCanvas = Quagga.canvas.dom.overlay;
+
+                if (result) {
+                    if (result.boxes) {
+                        drawingCtx.clearRect(0, 0, parseInt(drawingCanvas.getAttribute("width")), parseInt(drawingCanvas.getAttribute("height")));
+                        result.boxes.filter(function (box) {
+                            return box !== result.box;
+                        }).forEach(function (box) {
+                            Quagga.ImageDebug.drawPath(box, {x: 0, y: 1}, drawingCtx, {color: "green", lineWidth: 2});
+                        });
+                    }
+
+                    if (result.box) {
+                        Quagga.ImageDebug.drawPath(result.box, {x: 0, y: 1}, drawingCtx, {color: "#00F", lineWidth: 2});
+                    }
+
+                    if (result.codeResult && result.codeResult.code) {
+                        Quagga.ImageDebug.drawPath(result.line, {x: 'x', y: 'y'}, drawingCtx, {color: 'red', lineWidth: 3});
+                    }
+                }
+            });
+
+            Quagga.onDetected(function(result) {
+                Quagga.stop();
+
+                try {
+                    scanSound.play();
+                } catch (ex) {
+                    // Nothing to do
+                }
+
+                var code = result.codeResult.code;
+
+                $('.result-zone').html(
+                    '<div class="alert alert-success">Recherche du produit code <strong>' + code + '</strong>, merci de patienter.</div>'
+                );
+
+                {/literal}
+                window.location = "{url path='/codebarre'}" + '/' + code;
+                {literal}
+            });
+        });
+    {/literal}
+    </script>
+{/block}

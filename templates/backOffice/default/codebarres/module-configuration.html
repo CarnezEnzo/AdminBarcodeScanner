@@ -1,0 +1,88 @@
+{$id_carac_pick = 12}
+<div class="row">
+    <div class="col-md-12 general-block-decorator">
+        <div class="row">
+            <div class="col-md-12 title title-without-tabs">
+                {intl d='francodeport.bo.default' l="Saisie en masse des codes barre"}
+            </div>
+        </div>
+
+        <div class="form-container">
+            <div class="row">
+                <div class="col-md-12 tree-articles">
+
+                    {function menu level=0}
+                        <ul id="category" {if $level > 0}class="tree" style="display: none"{/if}>
+                            {loop name="cat-parent-$level" type="category" parent=$parent need_count_child=1 return_url=0}
+                                {if $CHILD_COUNT > 0}
+                                    <li>
+                                        <a class="tree-toggler category" href="#">{$TITLE}</a>
+                                        {menu parent=$ID level=$level+1}
+                                    </li>
+                                {else}
+                                    <li>
+                                        <a class="tree-toggler category" href="#">{$TITLE}</a>
+                                        <ul class="product-tree list-unstyled tree" style="display: none">
+                                            {$loopName="product-$ID-$level"}
+                                            {loop type="product" name=$loopName category=$ID return_url=0}
+                                                <li class="product{if empty($EAN_CODE)} bg-warning{/if}">
+                                                    <div class="row">
+                                                        <div class="col-md-1">
+                                                            <a target="_product" href="{url path='admin/products/update' product_id=$ID}">{$REF}</a>
+                                                        </div>
+                                                        <div class="col-md-6">{$TITLE}</div>
+                                                        <div class="col-md-2">
+                                                            {loop name="pick" type="feature_value" feature=$id_carac_pick product=$ID}
+                                                                Pick: {$TITLE}
+                                                            {/loop}
+                                                        </div>
+                                                        <div class="col-md-2">EAN: <span id="ean-{$ID}">{$EAN_CODE|default:'aucun'}</span></div>
+                                                        <div class="col-md-1">
+                                                            <button class="btn btn-block btn-xs btn-info btn-scan" data-product-id="{$ID}" data-toggle="modal" data-target="#scanner">MAJ</button>
+                                                        </div>
+                                                    </div>
+                                            {/loop}
+                                        </ul>
+                                    </li>
+                                {/if}
+                            {/loop}
+                        </ul>
+                    {/function}
+
+                    {menu parent='0'}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" tabindex="-1" id="scanner" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Fermer"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title">Scanner le code barre</h4>
+            </div>
+            <div class="modal-body">
+                <div class="codebarre row">
+                    <input type="hidden" name="decoder_readers" value="ean">
+                    <input type="hidden" name="input-stream_constraints" value="800x600">
+                    <input type="hidden" name="locator_patch-size" value="medium">
+                    <input type="hidden" name="locator_half-sample" value="1" />
+                    <input type="hidden" name="numOfWorkers" value="4" />
+
+                    <input type="hidden" id="productId" name="productId" value="?" />
+
+                    <div class="col-sm-12 result-zone"></div>
+
+                    <div class="col-sm-12">
+                        <div id="interactive" class="viewport"></div>
+                    </div>
+                </div><!-- /.layout -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default btn-stop-scanner" data-dismiss="modal">Annuler</button>
+            </div>
+        </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
