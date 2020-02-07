@@ -154,7 +154,7 @@
             var code = result.codeResult.code;
 
             $('.result-zone').html(
-                '<div class="alert alert-success">Enregistrement du code <strong>' + code + '</strong>...</div>'
+                '<div class="alert alert-success">Chargement du code <strong>' + code + '</strong>...</div>'
             );
 
             $('.btn-stop-scanner').prop("disabled", true);
@@ -163,14 +163,16 @@
 
             $.ajax({
                 {/literal}
-                url: '{url path="/admin/codebarre"}' + '/' + productId + '/' + code,
+                url: '{url path="/codebarre"}' + '/'  + code,
                 {literal}
                 success: function() {
                     $('#ean-' + productId).text(code).closest('li').removeClass('bg-warning');
-
+                    {/literal}
+                    window.location = '{url path="/codebarre"}' + '/'  + code;
+                    {literal}
                 },
-                error: function() {
-                    alert("Désolé, quelque chose s'est mal passé. Merci de ré-essayer.");
+                error: function(e) {
+                    alert("Désolé, quelque chose s'est mal passé. Ce produit semble introuvable. Merci de ré-essayer.");
                 }
             }).done(function() {
                 $('#scanner').modal('hide');

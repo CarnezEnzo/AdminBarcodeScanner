@@ -28,7 +28,9 @@ class SearchController extends BaseFrontController
             $product = $pse->getProduct();
 
             // Redirect to product page
-            return $this->generateRedirect($product->getUrl());
+            return $this->generateRedirect(
+                URL::getInstance()->absoluteUrl('admin/products/update', ['product_id' => $product->getId()])
+            );
         } else {
             return $this->generateRedirect(URL::getInstance()->absoluteUrl('/codebarre', [
                 'nocode' => $codeEan,
