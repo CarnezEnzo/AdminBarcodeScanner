@@ -1,35 +1,31 @@
-.codebarre {
-    margin-bottom: 20px;
-}
-
-.codebarre .camzone {
+.barcode .camzone {
     display: none;
 }
 
-.codebarre .btn-stop {
+.barcode .btn-stop, .barcode .btn-save {
     display: none;
 }
 
-.codebarre #interactive.viewport {
+.barcode #interactive.viewport {
     width: 100%;
     position: relative;
     border: 1px solid #ccc;
 }
 
-.codebarre #interactive.viewport canvas, video {
+.barcode #interactive.viewport canvas, video {
     float: left;
     width: 100%;
 }
 
-.codebarre #interactive.viewport canvas.drawingBuffer,
-.codebarre video.drawingBuffer {
+.barcode #interactive.viewport canvas.drawingBuffer,
+.barcode video.drawingBuffer {
     position: absolute;
     top: 0;
     left: 0;
     z-index: 10;
 }
 
-.codebarre .result-zone .alert {
+.barcode .result-zone .alert {
     margin: 5px 0;
 }
 
@@ -48,3 +44,7 @@
     margin: 2px 0;
 }
 
+.ipt-ean {
+  width: 100%;
+  margin-top: 5px;
+}

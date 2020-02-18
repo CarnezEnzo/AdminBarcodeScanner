@@ -10,19 +10,38 @@
 /*      file that was distributed with this source code.                             */
 /*************************************************************************************/
 
-namespace Codebarres;
+namespace AdminBarcodeScanner;
 
 use Thelia\Module\BaseModule;
+use AdminBarcodeScanner\Model\ProductEanQuery;
+use Thelia\Model\ProductSaleElementsQuery;
+use Propel\Runtime\Connection\ConnectionInterface;
+use Thelia\Install\Database;
 
-class Codebarres extends BaseModule
+class AdminBarcodeScanner extends BaseModule
 {
     /** @var string */
-    const DOMAIN_NAME = 'codebarres';
+    const DOMAIN_NAME = 'adminbarcodescanner';
 
-    /*
-     * You may now override BaseModuleInterface methods, such as:
-     * install, destroy, preActivation, postActivation, preDeactivation, postDeactivation
-     *
-     * Have fun !
-     */
+    /** @var string */
+    const MAIN_TABLE = 'adminbarcodescanner_main_table';
+
+    /** @var array */
+    const POSSIBLE_CONFIGURATIONS = array(
+      'default',
+      'custom'
+    );
+
+    public function postActivation(ConnectionInterface $con = null)
+    {
+      try {
+          ProductEanQuery::create()->findOne();
+      } catch (\Exception $e) {
+          $database = new Database($con);
+          $database->insertSql(null, [__DIR__ . "/Config/thelia.sql"]);
+      }
+
+      if (null === self::getConfigValue(self::MAIN_TABLE))
+          self::setConfigValue(self::MAIN_TABLE, 'default');
+    }
 }

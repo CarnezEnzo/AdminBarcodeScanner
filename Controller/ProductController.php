@@ -7,11 +7,10 @@
 /*                                                                                   */
 /*************************************************************************************/
 
-namespace Codebarres\Controller;
+namespace AdminBarcodeScanner\Controller;
 
-use FrancoDePort\FrancoDePort;
-use FrancoDePort\Model\CustomerFranco;
-use FrancoDePort\Model\CustomerFrancoQuery;
+use AdminBarcodeScanner\Model\ProductEan;
+use AdminBarcodeScanner\Model\ProductEanQuery;
 use Thelia\Controller\Admin\BaseAdminController;
 use Thelia\Core\HttpFoundation\Response;
 use Thelia\Core\Security\AccessManager;
@@ -21,6 +20,7 @@ use Thelia\Model\ProductQuery;
 use Thelia\Model\ProductSaleElements;
 use Thelia\Model\ProductSaleElementsQuery;
 use Thelia\Tools\URL;
+use AdminBarcodeScanner\AdminBarcodeScanner;
 
 /**
  * @author Franck Allimant <franck@cqfdev.fr>
@@ -29,22 +29,30 @@ class ProductController extends BaseAdminController
 {
     public function setCode($productId, $codeEan)
     {
-        if (null !== $response = $this->checkAuth(AdminResources::MODULE, 'Codebarre', AccessManager::UPDATE)) {
+        if (null !== $response = $this->checkAuth(AdminResources::MODULE, 'AdminBarcodeScanner', AccessManager::UPDATE)) {
             return $response;
         }
 
-        $pseList = ProductSaleElementsQuery::create()->findByProductId($productId);
+        $config = AdminBarcodeScanner::getConfigValue(AdminBarcodeScanner::MAIN_TABLE);
 
-        /** @var ProductSaleElements $pse */
+        if ($config == 'default')
+            $pseList = ProductSaleElementsQuery::create()->findByProductId($productId);
+        else
+            $pseList = ProductEanQuery::create()->useProductSaleElementsQuery()
+                ->filterByProductId($productId)
+                ->endUse()
+                ->find();
+
         foreach ($pseList as $pse) {
-            $pse->setEanCode($codeEan)->save();
+            $pse->setEanCode($codeEan)
+                ->save();
         }
 
         if ($this->getRequest()->isXmlHttpRequest()) {
             return new Response('OK');
         } else {
             return $this->generateRedirect(
-                URL::getInstance()->absoluteUrl('admin/products/update', ['product_id' => $productId])
+                URL::getInstance()->absoluteUrl('admin/products/update', ['product_id' => $productId, 'current_tab' => 'prices'])
             );
         }
     }

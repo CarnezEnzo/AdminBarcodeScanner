@@ -2,12 +2,16 @@
 <module xmlns="http://thelia.net/schema/dic/module"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="http://thelia.net/schema/dic/module http://thelia.net/schema/dic/module/module-2_2.xsd">
-    <fullnamespace>Codebarres\Codebarres</fullnamespace>
+    <fullnamespace>AdminBarcodeScanner\AdminBarcodeScanner</fullnamespace>
     <descriptive locale="fr_FR">
-        <title>Scanner de code barres</title>
+        <title>Lecteur de code-barres</title>
+    </descriptive>
+    <descriptive locale="en_US">
+        <title>Barcode Scanner</title>
     </descriptive>
     <languages>
         <language>fr_FR</language>
+        <language>en_US</language>
     </languages>
     <version>1.0.0</version>
     <authors>
@@ -16,6 +20,12 @@
             <company>CQFDev</company>
             <email>thelia@cqfdev.fr</email>
             <website>www.cqfdev.fr</website>
+        </author>
+        <author>
+            <name>Enzo CARNEZ</name>
+            <company>OpenStudio</company>
+            <email>ecarnez@openstudio.fr</email>
+            <website>openstudio.fr</website>
         </author>
     </authors>
     <type>classic</type>

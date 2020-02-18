@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<database defaultIdMethod="native" name="thelia"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:noNamespaceSchemaLocation="../../../core/vendor/propel/propel/resources/xsd/database.xsd" >
+
+    <table name="product_ean" namespace="AdminBarcodeScanner\Model">
+        <column name="product_sale_id" type="INTEGER" primaryKey="true" required="true" />
+        <column name="ean_code" required="true" type="VARCHAR" size="255" />
+
+        <foreign-key foreignTable="product_sale_elements" name="fk_barcode_scanner_product_id" onDelete="CASCADE" onUpdate="RESTRICT">
+            <reference foreign="id" local="product_sale_id" />
+        </foreign-key>
+    </table>
+    <external-schema filename="local/config/schema.xml" referenceOnly="true" />
+</database>

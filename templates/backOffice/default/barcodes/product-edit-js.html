@@ -1,17 +1,73 @@
-<script src="{javascript file='codebarres/assets/js/quagga.min.js' source="Codebarres"}"></script>
+<script src="{javascript file='barcodes/assets/js/quagga.min.js' source='AdminBarcodeScanner'}"></script>
 
 <script>
     {literal}
+    function isMobileDevice() {
+        return (typeof window.orientation !== "undefined") || (navigator.userAgent.indexOf('IEMobile') !== -1);
+    };
+
     $(function() {
         {/literal}
-        var scanSound = new Audio("{asset file='codebarres/assets/sounds/barcode-sound.mp3' source="Codebarres"}");
+        var scanSound = new Audio("{asset file='barcodes/assets/sounds/barcode-sound.mp3' source='AdminBarcodeScanner'}");
         {literal}
+
+        if (isMobileDevice())
+          $('#ipt-ean').remove();
+
+        var last_camera = null;
+        var deviceId = null;
+        var deviceNumber = 0;
+
+        if (navigator.mediaDevices && navigator.mediaDevices.enumerateDevices) {
+          navigator.mediaDevices.enumerateDevices()
+          .then(function(devices) {
+            devices.forEach(function(device) {
+              // select back camera by default
+              if (device.kind == "videoinput" && device.label.match(/back/) !== null) {
+                deviceId = device.deviceId;
+                $('#videoSource').append(`<option value="${device.deviceId}" selected="selected">${device.label}</option>`);
+                deviceNumber++;
+              }
+              else if (device.kind === "videoinput") {
+                last_camera = device.deviceId;
+                $('#videoSource').append(`<option value="${device.deviceId}">${device.label}</option>`);
+                deviceNumber++;
+              }
+            });
+            if (deviceId == null)
+              deviceId = last_camera;
+
+            if (deviceNumber == 1) {
+                // Useless to have a select if there's only one choice
+                $('#videoSource').remove();
+            }
+          })
+        }
+
+        $("#videoSource").on('change', function(e) {
+          if (_scannerIsRunning) {
+            Quagga.stop();
+          }
+          var App = makeApp($('#videoSource').val());
+          App.init();
+        })
+
+        var App = makeApp(deviceId);
+
+        var _scannerIsRunning = false;
 
         $('.btn-start').on('click', function(ev) {
             $('.camzone').show();
 
             $('.btn-start').hide();
             $('.btn-stop').show();
+            $('.btn-save').hide();
+            $('.ipt-ean').val('');
+            $('.ipt-ean').focus();
+
+            {/literal}
+            $('.btn-save').html('<span class="glyphicon glyphicon-ok"></span> {intl l="Save barcode" d="adminbarcodescanner"}');
+            {literal}
 
             App.init();
 
@@ -29,15 +85,61 @@
             ev.preventDefault();
         });
 
-        var App = {
+        $('.btn-save').on('click', function(ev) {
+          {/literal}
+          var code = $('.btn-save').data('code');
+          {literal}
+          if (code) {
+                $.ajax({
+                    {/literal}
+                    url: '{url path="/admin/barcode/{$smarty.get.product_id}"}' + '/' + code,
+                    {literal}
+                    success: function() {
+                        {/literal}
+                        $('.btn-save').html('<span class="glyphicon glyphicon-ok"></span> {intl l="New barcode saved !" d="adminbarcodescanner"}');
+                        {literal}
+                    },
+                    error: function(e) {
+                        {/literal}
+                        alert("{intl l='Sorry, something wrong happened. Please try again later.' d='adminbarcodescanner'}");
+                        {literal}
+                    }
+                }).always(function() {
+                    $('#scanner').modal('hide');
+                });
+          }
+          ev.preventDefault();
+        });
+
+        $('.ipt-ean').on('keypress',function(e) {
+          if(e.which == 13) {
+              var code = $('.ipt-ean').val()
+              if (code)
+                onDetectedCode(code);
+              e.preventDefault();
+          }
+        });
+
+        function onDetectedCode(code) {
+          // Just edit the ean code field without saving it
+          $('#ean_code_field').val(code);
+          $('.btn-stop').trigger('click');
+          $('.btn-save').data('code', code);
+
+          // Show the confirm button
+          $('.btn-save').show();
+        }
+
+        function makeApp(deviceId) {
+            return {
             init : function() {
                 Quagga.init(this.state, function(err) {
                     if (err) {
-                        alert(err);
                         return;
                     }
 
                     Quagga.start();
+                    _scannerIsRunning = true;
                 });
             },
             _accessByPath: function(obj, path, val) {
@@ -95,7 +197,7 @@
                     constraints: {
                         width: 800,
                         height: 600,
-                        facingMode: "environment" // or user
+                        deviceId: deviceId
                     }
                 },
                 locator: {
@@ -113,6 +215,7 @@
             },
             lastResult : null
         };
+      }
 
         Quagga.onProcessed(function(result) {
             var drawingCtx = Quagga.canvas.ctx.overlay,
@@ -149,13 +252,7 @@
 
             var code = result.codeResult.code;
 
-            $('.result-zone').html(
-                '<div class="alert alert-success">Enregistrement du code <strong>' + code + '</strong>...</div>'
-            );
-
-            {/literal}
-            window.location = '{url path="/admin/codebarre/{$product_id}"}' + '/' + code;
-            {literal}
+            onDetectedCode(code);
         });
     });
     {/literal}

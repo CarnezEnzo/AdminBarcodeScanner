@@ -4,11 +4,18 @@
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="http://thelia.net/schema/dic/config http://thelia.net/schema/dic/config/thelia-1.0.xsd">
 
+    <services>
+        <service id="admin_barcode_scanner.listener" class="AdminBarcodeScanner\EventListeners\ProductExtendPriceFormListener" scope="request">
+            <tag name="kernel.event_subscriber"/>
+            <argument type="service" id="request" />
+        </service>
+    </services>
+
     <hooks>
-        <hook id="codebarres.hookmanager" class="Codebarres\Hook\HookManager">
-            <tag name="hook.event_listener" event="main.head-css" type="back" method="insertCodebarresCss" />
-            <tag name="hook.event_listener" event="product.edit-js" type="back" method="insertCodesbarresJs" />
-            <tag name="hook.event_listener" event="product.modification.form-right.top" type="back" method="onProductEditBottom" />
+        <hook id="admin_barcode_scanner.hookmanager" class="AdminBarcodeScanner\Hook\HookManager">
+            <tag name="hook.event_listener" event="main.head-css" type="back" method="insertBarcodeCss" />
+            <tag name="hook.event_listener" event="product.edit-js" type="back" method="insertBarcodeJs" />
+            <tag name="hook.event_listener" event="product.details-details-form" type="back" method="onProductEditBottom" />
 
             <tag name="hook.event_listener" event="main.top-menu-tools" type="back" method="onMainTopMenuTools" />
             <tag name="hook.event_listener" event="module.config-js" type="back" method="onModuleConfigurationJs" />

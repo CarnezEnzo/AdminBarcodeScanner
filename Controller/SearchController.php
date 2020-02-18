@@ -14,27 +14,46 @@
  * Date: 02/05/2016 10:40
  */
 
-namespace Codebarres\Controller;
+namespace AdminBarcodeScanner\Controller;
 
+use AdminBarcodeScanner\Model\ProductEan;
+use AdminBarcodeScanner\Model\ProductEanQuery;
 use Thelia\Controller\Front\BaseFrontController;
 use Thelia\Model\ProductSaleElementsQuery;
+use Thelia\Model\ProductSaleElements;
+use AdminBarcodeScanner\AdminBarcodeScanner;
 use Thelia\Tools\URL;
+use Thelia\Core\HttpFoundation\Response;
 
 class SearchController extends BaseFrontController
 {
     public function search($codeEan)
     {
-        if (null !== $pse = ProductSaleElementsQuery::create()->findOneByEanCode($codeEan)) {
-            $product = $pse->getProduct();
+        $config = AdminBarcodeScanner::getConfigValue(AdminBarcodeScanner::MAIN_TABLE);
+        if ($config == 'default')
+            $pse = ProductSaleElementsQuery::create()->findOneByEanCode($codeEan);
+            if (null !== $pse)
+                $product = $pse->getProduct();
+        else {
+            $pse = ProductEanQuery::create()->findOneByEanCode($codeEan);
+            if (null !== $pse)
+                $product = $pse->getProductSaleElements()->getProduct();
+        }
 
-            // Redirect to product page
+        if (null !== $pse) {
+            // Redirect to product update page
             return $this->generateRedirect(
-                URL::getInstance()->absoluteUrl('admin/products/update', ['product_id' => $product->getId()])
+                URL::getInstance()->absoluteUrl(
+                  'admin/products/update',
+                  [
+                    'product_id' => $product->getId(),
+                    'current_tab' => 'prices'
+                  ]
+                )
             );
-        } else {
-            return $this->generateRedirect(URL::getInstance()->absoluteUrl('/codebarre', [
-                'nocode' => $codeEan,
-            ]));
+        }
+        else {
+            return new Response('', 404);
         }
     }
 }
